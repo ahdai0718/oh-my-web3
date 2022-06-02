@@ -16,7 +16,8 @@ if (window) {
         binButtons();
 
         ZooFrenzToken.init(web3);
-        await ZooFrenzToken.listNFTs(web3.defaultAccount as string);
+        const nfts = await ZooFrenzToken.listNFTs(web3.defaultAccount as string);
+        window.console.log("nfts:", nfts)
     }
 }
 

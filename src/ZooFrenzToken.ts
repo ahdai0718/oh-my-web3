@@ -134,31 +134,57 @@ class ZooFrenzToken {
     };
 
     // tokenOfOwnerByIndex
-    public async listNFTs(address: string) {
+    public async listNFTs(address: string): Promise<string[]> {
         const contract = this.contractZooFrenzToken();
 
         const balance = await this.balanceOf(this.defaultAccount() as string);
 
         window.console.log("balance:", balance);
 
+        const promises: Promise<string>[] = [];
+
         for (let index = 0; index < Number.parseInt(balance); index++) {
             contract.methods.tokenOfOwnerByIndex(address, index).call()
                 .then((x: any) => {
                     window.console.log("tokenOfOwnerByIndex:", x);
 
-                    contract.methods.tokenURI(x).call()
-                        .then((x: any) => {
-                            window.console.log("tokenURI:", x);
-                        })
-                        .catch((err: any) => {
-                            window.console.error("tokenURI:", err);
-                        });
+                    promises.push(contract.methods.tokenURI(x).call());
+
+                    // contract.methods.tokenURI(x).call()
+                    //     .then((uri: any) => {
+                    //         window.console.log("tokenURI:", uri);
+
+                    //         const headers: HeadersInit = new Headers();
+
+                    //         fetch(uri, {
+                    //             method: "get",
+                    //             mode: "no-cors",
+                    //             headers
+                    //         })
+                    //             .then(response => {
+                    //                 window.console.log("response:", response);
+
+                    //                 if (response.ok) {
+                    //                     response.json()
+                    //                 }
+                    //             })
+                    //             .catch(err => {
+                    //                 window.console.error("fetch token uri:", err);
+                    //             })
+                    //     })
+                    //     .catch((err: any) => {
+                    //         window.console.error("tokenURI:", err);
+                    //     });
 
                 })
                 .catch((err: any) => {
                     window.console.error(err);
                 });
         }
+
+        window.console.log("promises:", promises)
+
+        return Promise.all(promises);
     };
 
     public balanceOf(address: string) {
