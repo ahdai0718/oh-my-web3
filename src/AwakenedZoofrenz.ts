@@ -2,11 +2,7 @@ import Web3 from "web3";
 import { Contract } from "web3-eth-contract";
 
 import { AwakenedZoofrenz as AwakenedZoofrenzABI } from "./abi/AwakenedZoofrenz";
-import { ZoofrenzFirstClassPass as ZoofrenzFirstClassPassABI } from "./abi/ZoofrenzFirstClassPass";
-
 const contractAwakenedZoofrenz = "0x44ab21cb8972c7b783dda32e93ed8a9075da8e6f";
-const contractZoofrenzFirstClassPass =
-  "0x6E334adF384D29bc1464dcf7ccCD382dA3d834bb";
 
 class AwakenedZoofrenz {
   private web3!: Web3;
@@ -298,6 +294,76 @@ class AwakenedZoofrenz {
     }
 
     return ownerMapByTokenId;
+  }
+
+  public tokenURI(index: number) {
+    return new Promise<string>((resolve, reject) => {
+      const contract = this.contractAwakenedZoofrenz();
+      contract.methods
+        .tokenURI(index)
+        .call()
+        .then((x: any) => {
+          window.console.log("tokenURI:", x);
+          resolve(x);
+        })
+        .catch((err: any) => {
+          window.console.error("tokenURI:", err);
+          reject(err);
+        });
+    });
+  }
+
+  private async batchTokenURI(
+    start: number,
+    end: number
+  ): Promise<Map<number, string>> {
+    console.log("batchTokenURI:", start, end);
+
+    const tokenIdMapTokenURI: Map<number, string> = new Map();
+
+    const promises: Promise<string>[] = [];
+
+    for (let index = start; index <= end; index++) {
+      promises.push(
+        new Promise((resolve, reject) => {
+          this.tokenURI(index)
+            .then((tokenURI) => {
+              tokenIdMapTokenURI.set(index, tokenURI);
+              resolve(tokenURI);
+            })
+            .catch((e) => {
+              window.console.error("catch exception:", e);
+              resolve("");
+            });
+        })
+      );
+    }
+
+    await Promise.all(promises);
+
+    return new Promise((resolve) => {
+      resolve(tokenIdMapTokenURI);
+    });
+  }
+
+  public async mapTokenURIById(
+    start: number,
+    end: number,
+    batchSize: number = 1
+  ) {
+    const allTokenURIMapById: Map<number, string> = new Map();
+
+    for (let index = start; index <= end; index += batchSize) {
+      const tokenURIMapById = await this.batchTokenURI(
+        index,
+        index + batchSize
+      );
+      tokenURIMapById.forEach((tokenURI, tokenId) => {
+        allTokenURIMapById.set(tokenId, tokenURI);
+      });
+    }
+
+    return allTokenURIMapById;
   }
 }
 
